@@ -13,6 +13,7 @@ type Props = {
   onPractice: () => void
 }
 
+/** Preview: Red + Yellow pawns in yards (looks like a real Ludu board). */
 const PREVIEW_PIECES = {
   red: [-1, -1, -1, -1] as number[],
   yellow: [-1, -1, -1, -1] as number[],
@@ -39,13 +40,13 @@ export function Lobby({
   return (
     <div className="lobby">
       <div className="lobby-atmosphere" aria-hidden />
+
       <header className="lobby-hero">
         <p className="lobby-kicker">Classic Ludu board · 2 players</p>
         <h1 className="brand">LUDU</h1>
       </header>
 
-      {/* Always show the real board on the lobby */}
-      <div className="lobby-board-preview">
+      <div className="lobby-board-preview" aria-hidden>
         <Board
           pieces={PREVIEW_PIECES}
           highlight={[]}
@@ -73,7 +74,7 @@ export function Lobby({
           <input
             value={name}
             maxLength={20}
-            placeholder="e.g. Ayesha"
+            placeholder="Player"
             autoComplete="nickname"
             enterKeyHint="done"
             onChange={(e) => setName(e.target.value)}
@@ -123,7 +124,10 @@ export function Lobby({
                   setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
                 }
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && code.trim().length >= 4) onJoin(code)
+                  if (e.key === 'Enter' && code.trim().length >= 4) {
+                    commitName()
+                    onJoin(code)
+                  }
                 }}
               />
             </label>
@@ -131,7 +135,10 @@ export function Lobby({
               type="button"
               className="btn primary"
               disabled={busy || code.trim().length < 4}
-              onClick={() => onJoin(code)}
+              onClick={() => {
+                commitName()
+                onJoin(code)
+              }}
             >
               Join game
             </button>

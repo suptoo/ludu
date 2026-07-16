@@ -86,10 +86,8 @@ export function usePlayerIdentity() {
 }
 
 export function useGameRoom(playerId: string, playerName: string) {
-  // Start ON the Ludu board immediately (practice) so users always see it
-  const [room, setRoom] = useState<LuduRoom | null>(() =>
-    makeLocalRoom(playerId, playerName || 'Player'),
-  )
+  // Home (lobby) first — Ludu board only after Play / Create / Join
+  const [room, setRoom] = useState<LuduRoom | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [localRolling, setLocalRolling] = useState(false)
