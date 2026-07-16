@@ -11,7 +11,7 @@ In **Vercel → Project → Settings → Environment Variables**, add:
 | `VITE_SUPABASE_URL` | `https://sqpwybdcccvthbmelesb.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | your anon public key |
 
-Local `.env` is already created for development (not committed to git).
+Copy `.env.example` → `.env` for local development (`.env` is not committed).
 
 ## How players connect
 
@@ -20,14 +20,24 @@ Local `.env` is already created for development (not committed to git).
 3. Player 2 → **I have a room code** → enter code → Join
 4. Play, chat, and send reactions live
 
-## Deploy
+## Setup
+
+1. Run `supabase/schema.sql` in your Supabase SQL Editor
+2. Set the env vars above
+3. Install and run:
 
 ```bash
 npm install
+npm run dev
+```
+
+## Deploy
+
+```bash
 npm run build
 ```
 
-Or connect the GitHub repo to Vercel and set the two env vars above.
+Or connect this GitHub repo to Vercel and set the two env vars.
 
 ## Stack
 
