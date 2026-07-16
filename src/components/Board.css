@@ -1,0 +1,322 @@
+/* Classic Ludu — pawns locked to cells & yard circles */
+
+.board-wrap {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  position: relative;
+  touch-action: manipulation;
+  filter: drop-shadow(0 14px 32px rgba(0, 0, 0, 0.5));
+}
+
+.ludo-board {
+  width: 100%;
+  height: 100%;
+  padding: 3.4%;
+  box-sizing: border-box;
+  border-radius: 4%;
+  position: relative;
+  background:
+    linear-gradient(160deg, #6d4c41 0%, #4e342e 40%, #3e2723 70%, #2c1810 100%);
+  box-shadow:
+    0 10px 0 #1a100c,
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.board-bezel {
+  position: absolute;
+  inset: 1.6%;
+  border-radius: 3%;
+  border: 2px solid #c9a227;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 236, 179, 0.35);
+  pointer-events: none;
+  z-index: 8;
+}
+
+.ludo-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  grid-template-rows: repeat(15, 1fr);
+  background: #fafafa;
+  border: 2.5px solid #111;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 1%;
+}
+
+/* ── Squares ── */
+.sq {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.sq-yard-green,
+.sq-yard-yellow,
+.sq-yard-red,
+.sq-yard-blue {
+  border: none;
+}
+
+.sq-yard-green {
+  background: #2e7d32;
+}
+.sq-yard-yellow {
+  background: #fbc02d;
+}
+.sq-yard-red {
+  background: #c62828;
+}
+.sq-yard-blue {
+  background: #1565c0;
+}
+
+.sq-path {
+  background: #ffffff;
+  border: 1px solid #212121;
+}
+
+.sq-path.safe {
+  background: #fff3e0;
+}
+
+.sq-path.start-red {
+  background: #e53935;
+  border-color: #b71c1c;
+}
+.sq-path.start-yellow {
+  background: #fdd835;
+  border-color: #f9a825;
+}
+.sq-path.start-green {
+  background: #43a047;
+  border-color: #1b5e20;
+}
+.sq-path.start-blue {
+  background: #1e88e5;
+  border-color: #0d47a1;
+}
+
+.sq-home-red {
+  background: #e53935;
+  border: 1px solid #8e0000;
+}
+.sq-home-yellow {
+  background: #fdd835;
+  border: 1px solid #c49000;
+}
+.sq-home-green {
+  background: #43a047;
+  border: 1px solid #1b5e20;
+}
+.sq-home-blue {
+  background: #1e88e5;
+  border: 1px solid #0d47a1;
+}
+
+.sq-center {
+  background: transparent;
+  border: none;
+}
+
+.sq-empty {
+  background: #fff;
+  border: none;
+}
+
+.star-svg {
+  width: 50%;
+  height: 50%;
+  color: #ef6c00;
+  pointer-events: none;
+}
+
+.arrow {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  pointer-events: none;
+}
+.arrow.up {
+  border-width: 0 4px 7px 4px;
+  border-color: transparent transparent #fff transparent;
+}
+.arrow.down {
+  border-width: 7px 4px 0 4px;
+  border-color: #4e342e transparent transparent transparent;
+}
+.arrow.right {
+  border-width: 4px 0 4px 7px;
+  border-color: transparent transparent transparent #fff;
+}
+.arrow.left {
+  border-width: 4px 7px 4px 0;
+  border-color: transparent #fff transparent transparent;
+}
+
+/* Yard nest */
+.yard-pad {
+  z-index: 3;
+  background: #ffffff;
+  border: 3px solid var(--yard-deep);
+  border-radius: 12%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.18);
+  /* allow pawn clicks */
+  pointer-events: none;
+}
+
+.yard-circles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12%;
+  width: 72%;
+  height: 72%;
+  pointer-events: none;
+}
+
+.yard-circle {
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff 0%, var(--yard-soft) 75%);
+  border: 2.5px solid var(--yard-deep);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Pawns inside circles are clickable */
+.yard-circle .pawn {
+  pointer-events: auto;
+  width: 78%;
+  height: auto;
+  aspect-ratio: 40 / 52;
+  max-height: 90%;
+}
+
+/* Center */
+.center-home {
+  grid-row: 7 / 10;
+  grid-column: 7 / 10;
+  position: relative;
+  z-index: 2;
+  background: #111;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tri {
+  position: absolute;
+  inset: 0;
+}
+.t-red {
+  background: linear-gradient(0deg, #b71c1c, #e53935);
+  clip-path: polygon(50% 50%, 0 100%, 100% 100%);
+}
+.t-green {
+  background: linear-gradient(90deg, #1b5e20, #43a047);
+  clip-path: polygon(50% 50%, 0 0, 0 100%);
+}
+.t-yellow {
+  background: linear-gradient(180deg, #fdd835, #f9a825);
+  clip-path: polygon(50% 50%, 0 0, 100% 0);
+}
+.t-blue {
+  background: linear-gradient(270deg, #0d47a1, #1e88e5);
+  clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+}
+
+/* Path pieces — same CSS grid as board cells = exact alignment */
+.cell-piece {
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cell-piece .pawn {
+  pointer-events: auto;
+  width: 85%;
+  max-width: 28px;
+  height: auto;
+  aspect-ratio: 40 / 52;
+}
+
+.pawn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: default;
+  display: grid;
+  place-items: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+.pawn-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.pawn.pickable {
+  cursor: pointer;
+  animation: pawn-pulse 0.85s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 0 2px #fff)
+    drop-shadow(0 0 8px rgba(255, 193, 7, 1))
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+  z-index: 12;
+}
+
+.pawn.pickable:active {
+  transform: scale(1.15);
+}
+
+.pawn:disabled {
+  opacity: 1;
+}
+
+.pawn-sm {
+  /* size handled by yard-circle .pawn */
+}
+
+@keyframes pawn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pawn.pickable {
+    animation: none;
+  }
+}

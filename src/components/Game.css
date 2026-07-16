@@ -1,0 +1,524 @@
+.game-shell {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+}
+
+.game-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 15% 20%, rgba(255, 59, 59, 0.16), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 85% 15%, rgba(255, 208, 0, 0.14), transparent 48%),
+    radial-gradient(ellipse 55% 35% at 80% 85%, rgba(41, 121, 255, 0.12), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 20% 90%, rgba(0, 200, 83, 0.12), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 50% 40%, rgba(20, 80, 50, 0.35), transparent 70%),
+    linear-gradient(180deg, #0f2a1c 0%, #071510 50%, #040d0a 100%);
+}
+
+.game-atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(232, 200, 114, 0.08), transparent 40%),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 22px,
+      rgba(255, 255, 255, 0.012) 22px,
+      rgba(255, 255, 255, 0.012) 23px
+    );
+  pointer-events: none;
+}
+
+.game-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+}
+
+/* ── Layout shell ── */
+.game-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  min-height: 100svh;
+  padding:
+    max(0.4rem, env(safe-area-inset-top, 0px))
+    0.5rem
+    0;
+  box-sizing: border-box;
+}
+
+/* Board column — centered on mobile */
+.board-column {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  order: 2;
+}
+
+.board-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.board-stage .board-wrap {
+  width: min(100%, 94vw, calc(100dvh - 16.5rem));
+  max-width: 420px;
+}
+
+/* Side column — above board on mobile (header/players) */
+.side-column {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  order: 1;
+  padding: 0 0.15rem;
+}
+
+.chat-backdrop {
+  display: none;
+}
+
+/* ── Header ── */
+.game-top {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.brand-mini {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  color: #f7f3e8;
+}
+
+.room-chip {
+  justify-self: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(247, 243, 232, 0.7);
+  background: rgba(0, 0, 0, 0.28);
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 243, 232, 0.14);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  touch-action: manipulation;
+  min-height: 40px;
+}
+
+.practice-chip {
+  cursor: default;
+}
+
+.room-label {
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.65rem;
+}
+
+.room-chip strong {
+  color: #f7f3e8;
+  letter-spacing: 0.16em;
+  font-size: 0.95rem;
+}
+
+.copy-hint {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  color: #86efac;
+}
+
+.leave-btn {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  background: transparent;
+  border: 1px solid rgba(247, 243, 232, 0.3);
+  color: #f7f3e8;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 40px;
+}
+
+.waiting-banner {
+  width: 100%;
+  text-align: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  color: #fef9c3;
+  background: rgba(202, 138, 4, 0.18);
+  border: 1px solid rgba(202, 138, 4, 0.35);
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.waiting-banner p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.copy-inline {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  background: #f7f3e8;
+  color: #0f2920;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+
+.players-bar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 2px solid transparent;
+  font-family: 'Outfit', sans-serif;
+  color: #f7f3e8;
+  transition: border-color 0.2s ease;
+  min-width: 0;
+}
+
+.player-card.active {
+  border-color: #f7f3e8;
+}
+
+.player-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.pname {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pcolor {
+  font-size: 0.65rem;
+  opacity: 0.65;
+}
+
+.turn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #86efac;
+  box-shadow: 0 0 8px #86efac;
+  animation: blink 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.status-line {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(247, 243, 232, 0.85);
+  min-height: 1.25em;
+  padding: 0 0.35rem;
+  line-height: 1.3;
+}
+
+.game-error {
+  margin: 0;
+  color: #fecdd3;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.btn.rematch {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.75rem 1.4rem;
+  border: none;
+  border-radius: 12px;
+  background: #f7f3e8;
+  color: #0f2920;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 48px;
+  width: min(100%, 220px);
+}
+
+/* Desktop controls hidden on mobile (dock used instead) */
+.desktop-controls {
+  display: none;
+}
+
+.desktop-chat-btn {
+  display: none;
+}
+
+/* ── Mobile dock ── */
+.mobile-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding:
+    0.55rem 0.65rem
+    calc(0.55rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    180deg,
+    rgba(4, 13, 10, 0) 0%,
+    rgba(4, 13, 10, 0.75) 22%,
+    rgba(8, 21, 16, 0.96) 100%
+  );
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  border-top: 1px solid rgba(232, 200, 114, 0.12);
+}
+
+/* Space so board isn't hidden under dock */
+.game-layout {
+  padding-bottom: calc(7.8rem + env(safe-area-inset-bottom, 0px));
+}
+
+.dock-reacts {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.quick-react {
+  flex: 1;
+  max-width: 48px;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 1.2rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.quick-react:disabled {
+  opacity: 0.35;
+}
+
+.quick-react:active:not(:disabled) {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.dock-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.dock-spacer {
+  width: 84px;
+  height: 84px;
+}
+
+.dock-chat {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  min-width: 88px;
+  min-height: 52px;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: 14px;
+  background: #f7f3e8;
+  color: #0f2920;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.dock-chat:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 899px) {
+  .chat-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+  }
+
+  .game-layout > .chat-panel:not(.open) {
+    pointer-events: none;
+  }
+
+  /* On mobile: board sits between side info and dock */
+  .board-column {
+    order: 2;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .side-column {
+    order: 1;
+  }
+}
+
+/* ── Desktop: board LEFT, controls + chat RIGHT ── */
+@media (min-width: 900px) {
+  .game-layout {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    max-width: 1180px;
+  }
+
+  .board-column {
+    order: 0;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: 640px;
+    padding-left: 0.25rem;
+  }
+
+  .board-stage .board-wrap {
+    width: min(100%, 560px);
+    max-width: 560px;
+  }
+
+  .side-column {
+    order: 1;
+    width: 340px;
+    max-width: 340px;
+    flex-shrink: 0;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding-top: 0.25rem;
+  }
+
+  .mobile-dock {
+    display: none;
+  }
+
+  .desktop-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+
+  .desktop-controls .quick-reacts {
+    display: flex;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .desktop-chat-btn {
+    display: none;
+  }
+
+  .chat-panel {
+    display: flex !important;
+    width: 300px;
+    flex-shrink: 0;
+    height: calc(100dvh - 2.5rem);
+    max-height: 720px;
+    order: 2;
+  }
+
+  .game-layout.practice .chat-panel {
+    display: none !important;
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.82;
+  }
+}

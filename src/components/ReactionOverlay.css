@@ -1,0 +1,77 @@
+.reaction-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.reaction-float {
+  position: absolute;
+  bottom: 18%;
+  left: 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  animation: float-up 2.1s ease-out forwards;
+}
+
+.reaction-float.from-right {
+  left: auto;
+  right: 12%;
+}
+
+.reaction-float.lane-1 {
+  left: 28%;
+}
+.reaction-float.lane-2 {
+  left: 45%;
+}
+.reaction-float.lane-3 {
+  left: 18%;
+  bottom: 28%;
+}
+.reaction-float.lane-4 {
+  left: auto;
+  right: 22%;
+  bottom: 24%;
+}
+
+.reaction-float.from-right.lane-1 {
+  right: 28%;
+  left: auto;
+}
+
+.reaction-emoji {
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+}
+
+.reaction-who {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  color: #f7f3e8;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-70px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) scale(0.9);
+  }
+}
