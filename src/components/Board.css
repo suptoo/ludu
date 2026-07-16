@@ -1,39 +1,43 @@
-/* Classic Ludu — pawns locked to cells & yard circles */
+/* Classic mobile Ludu board — flat, bright, star safes, map-pin pawns */
 
 .board-wrap {
   width: 100%;
   max-width: 560px;
-  aspect-ratio: 1;
   margin: 0 auto;
   position: relative;
   touch-action: manipulation;
-  filter: drop-shadow(0 14px 32px rgba(0, 0, 0, 0.5));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.board-player-label {
+  margin: 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.85rem, 2.8vw, 1.05rem);
+  color: #fff;
+  text-shadow: 0 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.board-player-label.flipped {
+  transform: rotate(180deg);
 }
 
 .ludo-board {
   width: 100%;
-  height: 100%;
-  padding: 3.4%;
+  aspect-ratio: 1;
   box-sizing: border-box;
-  border-radius: 4%;
+  border-radius: 2%;
   position: relative;
-  background:
-    linear-gradient(160deg, #6d4c41 0%, #4e342e 40%, #3e2723 70%, #2c1810 100%);
+  background: #fff;
   box-shadow:
-    0 10px 0 #1a100c,
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.board-bezel {
-  position: absolute;
-  inset: 1.6%;
-  border-radius: 3%;
-  border: 2px solid #c9a227;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 236, 179, 0.35);
-  pointer-events: none;
-  z-index: 8;
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    0 0 0 3px #111;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
 }
 
 .ludo-grid {
@@ -43,14 +47,12 @@
   display: grid;
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
-  background: #fafafa;
-  border: 2.5px solid #111;
+  background: #fff;
   box-sizing: border-box;
   overflow: hidden;
-  border-radius: 1%;
+  border-radius: 1.5%;
 }
 
-/* ── Squares ── */
 .sq {
   position: relative;
   box-sizing: border-box;
@@ -62,67 +64,63 @@
   z-index: 1;
 }
 
+.sq-yard-red,
 .sq-yard-green,
 .sq-yard-yellow,
-.sq-yard-red,
 .sq-yard-blue {
   border: none;
 }
 
+.sq-yard-red {
+  background: #e53935;
+}
 .sq-yard-green {
   background: #2e7d32;
 }
 .sq-yard-yellow {
-  background: #fbc02d;
-}
-.sq-yard-red {
-  background: #c62828;
+  background: #fdd835;
 }
 .sq-yard-blue {
-  background: #1565c0;
+  background: #1e88e5;
 }
 
 .sq-path {
   background: #ffffff;
-  border: 1px solid #212121;
+  border: 0.5px solid #212121;
 }
 
 .sq-path.safe {
-  background: #fff3e0;
+  background: #ffffff;
 }
 
+.sq-path.start-blue {
+  background: #1e88e5;
+}
+.sq-path.start-green {
+  background: #2e7d32;
+}
 .sq-path.start-red {
   background: #e53935;
-  border-color: #b71c1c;
 }
 .sq-path.start-yellow {
   background: #fdd835;
-  border-color: #f9a825;
-}
-.sq-path.start-green {
-  background: #43a047;
-  border-color: #1b5e20;
-}
-.sq-path.start-blue {
-  background: #1e88e5;
-  border-color: #0d47a1;
 }
 
 .sq-home-red {
   background: #e53935;
-  border: 1px solid #8e0000;
+  border: 0.5px solid #8e0000;
+}
+.sq-home-green {
+  background: #2e7d32;
+  border: 0.5px solid #1b5e20;
 }
 .sq-home-yellow {
   background: #fdd835;
-  border: 1px solid #c49000;
-}
-.sq-home-green {
-  background: #43a047;
-  border: 1px solid #1b5e20;
+  border: 0.5px solid #c49000;
 }
 .sq-home-blue {
   background: #1e88e5;
-  border: 1px solid #0d47a1;
+  border: 0.5px solid #0d47a1;
 }
 
 .sq-center {
@@ -136,10 +134,11 @@
 }
 
 .star-svg {
-  width: 50%;
-  height: 50%;
-  color: #ef6c00;
+  width: 62%;
+  height: 62%;
+  color: #111;
   pointer-events: none;
+  opacity: 0.85;
 }
 
 .arrow {
@@ -147,37 +146,49 @@
   height: 0;
   border-style: solid;
   pointer-events: none;
-}
-.arrow.up {
-  border-width: 0 4px 7px 4px;
-  border-color: transparent transparent #fff transparent;
-}
-.arrow.down {
-  border-width: 7px 4px 0 4px;
-  border-color: #4e342e transparent transparent transparent;
-}
-.arrow.right {
-  border-width: 4px 0 4px 7px;
-  border-color: transparent transparent transparent #fff;
-}
-.arrow.left {
-  border-width: 4px 7px 4px 0;
-  border-color: transparent #fff transparent transparent;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
 }
 
-/* Yard nest */
+.arrow.up {
+  border-width: 0 5px 9px 5px;
+  border-color: transparent transparent currentColor transparent;
+}
+.arrow.down {
+  border-width: 9px 5px 0 5px;
+  border-color: currentColor transparent transparent transparent;
+}
+.arrow.right {
+  border-width: 5px 0 5px 9px;
+  border-color: transparent transparent transparent currentColor;
+}
+.arrow.left {
+  border-width: 5px 9px 5px 0;
+  border-color: transparent currentColor transparent transparent;
+}
+
+.blue-arrow {
+  color: #fff;
+}
+.green-arrow {
+  color: #fff;
+}
+.red-arrow {
+  color: #fff;
+}
+.yellow-arrow {
+  color: #5d4037;
+}
+
+/* Yard nest — white pad with solid colored circles */
 .yard-pad {
   z-index: 3;
   background: #ffffff;
-  border: 3px solid var(--yard-deep);
-  border-radius: 12%;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
-    0 2px 6px rgba(0, 0, 0, 0.18);
-  /* allow pawn clicks */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
   pointer-events: none;
 }
 
@@ -185,17 +196,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 12%;
-  width: 72%;
-  height: 72%;
+  gap: 14%;
+  width: 70%;
+  height: 70%;
   pointer-events: none;
 }
 
 .yard-circle {
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #fff 0%, var(--yard-soft) 75%);
-  border: 2.5px solid var(--yard-deep);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,16 +214,15 @@
   overflow: visible;
 }
 
-/* Pawns inside circles are clickable */
 .yard-circle .pawn {
   pointer-events: auto;
-  width: 78%;
+  width: 92%;
   height: auto;
-  aspect-ratio: 40 / 52;
-  max-height: 90%;
+  aspect-ratio: 48 / 64;
+  max-height: 100%;
 }
 
-/* Center */
+/* Center — classic 4 triangles */
 .center-home {
   grid-row: 7 / 10;
   grid-column: 7 / 10;
@@ -228,24 +237,25 @@
   position: absolute;
   inset: 0;
 }
-.t-red {
-  background: linear-gradient(0deg, #b71c1c, #e53935);
-  clip-path: polygon(50% 50%, 0 100%, 100% 100%);
-}
+
+/* Top = green, right = yellow, bottom = blue, left = red */
 .t-green {
-  background: linear-gradient(90deg, #1b5e20, #43a047);
-  clip-path: polygon(50% 50%, 0 0, 0 100%);
-}
-.t-yellow {
-  background: linear-gradient(180deg, #fdd835, #f9a825);
+  background: linear-gradient(180deg, #43a047, #2e7d32);
   clip-path: polygon(50% 50%, 0 0, 100% 0);
 }
-.t-blue {
-  background: linear-gradient(270deg, #0d47a1, #1e88e5);
+.t-yellow {
+  background: linear-gradient(90deg, #fdd835, #fbc02d);
   clip-path: polygon(50% 50%, 100% 0, 100% 100%);
 }
+.t-blue {
+  background: linear-gradient(0deg, #1565c0, #1e88e5);
+  clip-path: polygon(50% 50%, 0 100%, 100% 100%);
+}
+.t-red {
+  background: linear-gradient(270deg, #e53935, #c62828);
+  clip-path: polygon(50% 50%, 0 0, 0 100%);
+}
 
-/* Path pieces — same CSS grid as board cells = exact alignment */
 .cell-piece {
   z-index: 6;
   display: flex;
@@ -258,10 +268,10 @@
 
 .cell-piece .pawn {
   pointer-events: auto;
-  width: 85%;
-  max-width: 28px;
+  width: 95%;
+  max-width: 32px;
   height: auto;
-  aspect-ratio: 40 / 52;
+  aspect-ratio: 48 / 64;
 }
 
 .pawn {
@@ -273,7 +283,7 @@
   place-items: center;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
 }
 
 .pawn-svg {
@@ -288,7 +298,7 @@
   animation: pawn-pulse 0.85s ease-in-out infinite;
   filter:
     drop-shadow(0 0 0 2px #fff)
-    drop-shadow(0 0 8px rgba(255, 193, 7, 1))
+    drop-shadow(0 0 10px #ff9800)
     drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
   z-index: 12;
 }
@@ -301,17 +311,13 @@
   opacity: 1;
 }
 
-.pawn-sm {
-  /* size handled by yard-circle .pawn */
-}
-
 @keyframes pawn-pulse {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.14) translateY(-2px);
   }
 }
 

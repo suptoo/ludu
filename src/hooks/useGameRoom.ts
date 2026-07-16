@@ -14,8 +14,21 @@ import type { Color, LuduRoom, PiecesState } from '../game/types'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 const EMPTY_PIECES: PiecesState = {
-  red: [-1, -1, -1, -1],
-  yellow: [-1, -1, -1, -1],
+  blue: [-1, -1, -1, -1],
+  green: [-1, -1, -1, -1],
+}
+
+function asColor(raw: unknown): Color {
+  if (raw === 'green' || raw === 'yellow') return 'green'
+  return 'blue'
+}
+
+function asPieces(raw: unknown): PiecesState {
+  const p = (raw ?? {}) as Record<string, number[] | undefined>
+  return {
+    blue: p.blue ?? p.red ?? [-1, -1, -1, -1],
+    green: p.green ?? p.yellow ?? [-1, -1, -1, -1],
+  }
 }
 
 function isLocalRoom(room: LuduRoom | null): boolean {
@@ -23,7 +36,6 @@ function isLocalRoom(room: LuduRoom | null): boolean {
 }
 
 function normalizeRoom(row: Record<string, unknown>): LuduRoom {
-  const pieces = (row.pieces as PiecesState) ?? EMPTY_PIECES
   return {
     id: row.id as string,
     code: row.code as string,
@@ -32,15 +44,12 @@ function normalizeRoom(row: Record<string, unknown>): LuduRoom {
     host_name: row.host_name as string,
     guest_id: (row.guest_id as string | null) ?? null,
     guest_name: (row.guest_name as string | null) ?? null,
-    current_turn: row.current_turn as Color,
+    current_turn: asColor(row.current_turn),
     dice_value: (row.dice_value as number | null) ?? null,
     dice_rolled: Boolean(row.dice_rolled),
     consecutive_sixes: Number(row.consecutive_sixes ?? 0),
-    winner: (row.winner as Color | null) ?? null,
-    pieces: {
-      red: pieces.red ?? [-1, -1, -1, -1],
-      yellow: pieces.yellow ?? [-1, -1, -1, -1],
-    },
+    winner: row.winner ? asColor(row.winner) : null,
+    pieces: asPieces(row.pieces),
     last_action: (row.last_action as string | null) ?? null,
     updated_at: row.updated_at as string,
     created_at: row.created_at as string,
@@ -60,15 +69,15 @@ function makeLocalRoom(playerId: string, playerName: string): LuduRoom {
     status: 'playing',
     host_id: playerId,
     host_name: name,
-    guest_id: `${playerId}-yellow`,
+    guest_id: `${playerId}-green`,
     guest_name: 'Friend',
-    current_turn: 'red',
+    current_turn: 'blue',
     dice_value: null,
     dice_rolled: false,
     consecutive_sixes: 0,
     winner: null,
-    pieces: { ...EMPTY_PIECES, red: [-1, -1, -1, -1], yellow: [-1, -1, -1, -1] },
-    last_action: 'Ludu board ready — roll the dice! (Practice: play both sides)',
+    pieces: { ...EMPTY_PIECES },
+    last_action: 'Need a 6 to leave base! Roll the dice. (Practice: play both sides)',
     updated_at: now,
     created_at: now,
   }
@@ -119,7 +128,7 @@ export function useGameRoom(playerId: string, playerName: string) {
       room.current_turn === myColor &&
       (room.status === 'playing' ||
         // Host can practice-move while waiting for friend
-        (room.status === 'waiting' && myColor === 'red')),
+        (room.status === 'waiting' && myColor === 'blue')),
   )
 
   const movable = useMemo(() => {
@@ -236,7 +245,7 @@ export function useGameRoom(playerId: string, playerName: string) {
             host_name: name,
             status: 'waiting',
             pieces: EMPTY_PIECES,
-            last_action: 'Room created — share the link. Practice as Red until friend joins.',
+            last_action: 'Room created — share the link. Need a 6 to leave base!',
           })
           .select('*')
           .single()
@@ -293,13 +302,13 @@ export function useGameRoom(playerId: string, playerName: string) {
             guest_id: playerId,
             guest_name: name,
             status: 'playing',
-            current_turn: 'red',
+            current_turn: 'blue',
             dice_value: null,
             dice_rolled: false,
             consecutive_sixes: 0,
             winner: null,
             pieces: EMPTY_PIECES,
-            last_action: `${name} joined! Fresh start — Red goes first.`,
+            last_action: `${name} joined! Fresh start — Blue goes first. Need a 6 to leave base!`,
             updated_at: new Date().toISOString(),
           })
           .eq('id', current.id)
@@ -349,7 +358,7 @@ export function useGameRoom(playerId: string, playerName: string) {
           dice_rolled: false,
           consecutive_sixes: 0,
           current_turn: passTo,
-          last_action: `${myColor === 'red' ? room.host_name : room.guest_name} rolled three 6s — turn skipped!`,
+          last_action: `${myColor === 'blue' ? room.host_name : room.guest_name} rolled three 6s — turn skipped!`,
         })
         return
       }
@@ -365,14 +374,16 @@ export function useGameRoom(playerId: string, playerName: string) {
         } else {
           const passTo =
             room.status === 'waiting' ? myColor : nextTurn(myColor)
+          const allInYard = room.pieces[myColor].every((p) => p < 0)
           await patchRoom({
             dice_value: value,
             dice_rolled: false,
             consecutive_sixes: 0,
             current_turn: passTo,
-            last_action:
-              room.status === 'waiting'
-                ? `Rolled ${value} — no moves. Keep practicing as Red.`
+            last_action: allInYard
+              ? `Rolled ${value} — need a 6 to leave base!`
+              : room.status === 'waiting'
+                ? `Rolled ${value} — no moves. Keep practicing as Blue.`
                 : `Rolled ${value} — no moves. Turn passes.`,
           })
         }
@@ -383,7 +394,10 @@ export function useGameRoom(playerId: string, playerName: string) {
         dice_value: value,
         dice_rolled: true,
         consecutive_sixes: consecutive,
-        last_action: `Rolled a ${value}. Tap a glowing pawn.`,
+        last_action:
+          value === 6
+            ? `SIX! Leave base or move — tap a glowing pawn.`
+            : `Rolled a ${value}. Tap a glowing pawn.`,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Roll failed.')
@@ -414,7 +428,7 @@ export function useGameRoom(playerId: string, playerName: string) {
         if (!result) throw new Error('Illegal move.')
 
         const won = checkWinner(result.pieces, myColor)
-        const name = myColor === 'red' ? room.host_name : room.guest_name
+        const name = myColor === 'blue' ? room.host_name : room.guest_name
 
         if (won) {
           await patchRoom({
@@ -437,15 +451,17 @@ export function useGameRoom(playerId: string, playerName: string) {
           dice_rolled: false,
           consecutive_sixes: keepTurn && room.dice_value === 6 ? room.consecutive_sixes : 0,
           current_turn: next,
-          last_action: result.captured
-            ? `${name} captured a token! Extra turn.`
-            : result.finishedPiece
-              ? `${name} got a token home! Extra turn.`
-              : room.status === 'waiting'
-                ? `${name} moved (waiting for friend).`
-                : keepTurn
-                  ? `${name} rolled 6 — roll again!`
-                  : `${name} moved. ${next === 'red' ? room.host_name : room.guest_name}'s turn.`,
+          last_action: result.leftYard
+            ? `${name} left base with a 6! Roll again.`
+            : result.captured
+              ? `${name} captured a token! Extra turn.`
+              : result.finishedPiece
+                ? `${name} got a token home! Extra turn.`
+                : room.status === 'waiting'
+                  ? `${name} moved (waiting for friend).`
+                  : keepTurn
+                    ? `${name} rolled 6 — roll again!`
+                    : `${name} moved. ${next === 'blue' ? room.host_name : room.guest_name}'s turn.`,
         })
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Move failed.')
@@ -462,13 +478,13 @@ export function useGameRoom(playerId: string, playerName: string) {
     try {
       await patchRoom({
         status: 'playing',
-        current_turn: 'red',
+        current_turn: 'blue',
         dice_value: null,
         dice_rolled: false,
         consecutive_sixes: 0,
         winner: null,
         pieces: EMPTY_PIECES,
-        last_action: 'Rematch! Red starts again.',
+        last_action: 'Rematch! Blue starts. Need a 6 to leave base!',
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Rematch failed.')

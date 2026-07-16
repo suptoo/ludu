@@ -11,6 +11,7 @@ import {
   cellKind,
   toAbsolute,
   type CellKind,
+  type Corner,
 } from '../game/constants'
 import type { Color, PiecesState } from '../game/types'
 import { FINISHED, YARD } from '../game/types'
@@ -22,6 +23,8 @@ type Props = {
   myColor: Color | null
   onSelectPiece: (index: number) => void
   currentTurn: Color
+  blueName?: string
+  greenName?: string
 }
 
 type BoardToken = {
@@ -35,13 +38,17 @@ function StarIcon() {
   return (
     <svg className="star-svg" viewBox="0 0 24 24" aria-hidden>
       <path
-        fill="currentColor"
-        d="M12 2.5l2.6 6.2 6.7.6-5.1 4.4 1.5 6.5L12 16.8 6.3 20.2l1.5-6.5-5.1-4.4 6.7-.6L12 2.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        d="M12 3.2l2.35 5.55 6.05.55-4.6 4.05 1.4 5.9L12 16.4l-5.2 2.85 1.4-5.9-4.6-4.05 6.05-.55L12 3.2z"
       />
     </svg>
   )
 }
 
+/** Map-pin / teardrop pawn matching classic mobile Ludu. */
 function Pawn({
   color,
   pickable,
@@ -65,30 +72,22 @@ function Pawn({
       onClick={onClick}
       aria-label={label}
     >
-      <svg viewBox="0 0 40 52" className="pawn-svg" aria-hidden>
-        <ellipse cx="20" cy="48" rx="13" ry="3" fill="rgba(0,0,0,0.25)" />
+      <svg viewBox="0 0 48 64" className="pawn-svg" aria-hidden>
+        <ellipse cx="24" cy="58" rx="12" ry="3.5" fill="rgba(0,0,0,0.28)" />
         <path
-          d="M11 33c0-5.5 4-9.5 9-9.5s9 4 9 9.5v3c0 1.8-1.4 3.2-3.2 3.2H14.2c-1.8 0-3.2-1.4-3.2-3.2v-3z"
+          d="M24 4c-9.4 0-17 7.6-17 17 0 12.8 17 35 17 35s17-22.2 17-35c0-9.4-7.6-17-17-17z"
           fill="var(--pawn)"
-          stroke="var(--pawn-deep)"
-          strokeWidth="1.5"
+          stroke="#111"
+          strokeWidth="1.8"
         />
-        <circle
-          cx="20"
-          cy="16"
-          r="8.5"
-          fill="var(--pawn)"
-          stroke="var(--pawn-deep)"
-          strokeWidth="1.5"
-        />
-        <circle cx="17.2" cy="13.2" r="2.8" fill="rgba(255,255,255,0.55)" />
-        <ellipse cx="20" cy="39.5" rx="11" ry="4.5" fill="var(--pawn-deep)" />
+        <circle cx="24" cy="20" r="9.5" fill="#fff" stroke="#111" strokeWidth="1.4" />
+        <circle cx="24" cy="20" r="6.2" fill="var(--pawn)" />
+        <circle cx="21.5" cy="17.5" r="2" fill="rgba(255,255,255,0.55)" />
       </svg>
     </button>
   )
 }
 
-/** Yard piece indexes in stable slot order 0–3. */
 function yardSlots(pieces: PiecesState, color: Color): (number | null)[] {
   const slots: (number | null)[] = [null, null, null, null]
   let slot = 0
@@ -101,18 +100,16 @@ function yardSlots(pieces: PiecesState, color: Color): (number | null)[] {
   return slots
 }
 
-/** Tokens on the path / home stretch / finish (not in yard). */
 function pathTokens(pieces: PiecesState): BoardToken[] {
   const out: BoardToken[] = []
-  ;(['red', 'yellow'] as Color[]).forEach((color) => {
+  ;(['blue', 'green'] as Color[]).forEach((color) => {
     pieces[color].forEach((rel, index) => {
       if (rel === YARD) return
       if (rel === FINISHED) {
-        // Sit on the matching center triangle tip cell
         out.push({
           color,
           index,
-          row: color === 'red' ? 8 : 6,
+          row: color === 'blue' ? 8 : 6,
           col: 7,
         })
         return
@@ -131,16 +128,15 @@ function cellClass(kind: CellKind, r: number, c: number): string {
   const pathId = PATH_BY_RC.get(`${r},${c}`)
   let extra = ''
   if (pathId !== undefined) {
-    if (pathId === 0) extra = ' start-red'
-    else if (pathId === 26) extra = ' start-yellow'
-    else if (pathId === 13) extra = ' start-green'
-    else if (pathId === 39) extra = ' start-blue'
+    if (pathId === 0) extra = ' start-blue'
+    else if (pathId === 26) extra = ' start-green'
+    else if (pathId === 13) extra = ' start-red'
+    else if (pathId === 39) extra = ' start-yellow'
     else if (SAFE_CELLS.has(pathId)) extra = ' safe'
   }
   return `sq sq-${kind}${extra}`
 }
 
-/** Group tokens sharing a cell so we can offset stacks. */
 function groupByCell(tokens: BoardToken[]) {
   const map = new Map<string, BoardToken[]>()
   tokens.forEach((t) => {
@@ -152,11 +148,15 @@ function groupByCell(tokens: BoardToken[]) {
   return map
 }
 
+const CORNERS: Corner[] = ['red', 'green', 'yellow', 'blue']
+
 export function Board({
   pieces,
   highlight,
   myColor,
   onSelectPiece,
+  blueName = 'Player 1',
+  greenName = 'Player 2',
 }: Props) {
   const onPath = pathTokens(pieces)
   const byCell = groupByCell(onPath)
@@ -172,11 +172,14 @@ export function Board({
           className={cellClass(kind, r, c)}
           style={{ gridRow: r + 1, gridColumn: c + 1 }}
         >
-          {pathId !== undefined && SAFE_CELLS.has(pathId) && <StarIcon />}
-          {pathId === 0 && <span className="arrow up" />}
-          {pathId === 26 && <span className="arrow down" />}
-          {pathId === 13 && <span className="arrow right" />}
-          {pathId === 39 && <span className="arrow left" />}
+          {pathId !== undefined && SAFE_CELLS.has(pathId) && pathId !== 0 && pathId !== 13 && pathId !== 26 && pathId !== 39 && (
+            <StarIcon />
+          )}
+          {/* Entry arrows on colored start squares */}
+          {pathId === 0 && <span className="arrow up blue-arrow" />}
+          {pathId === 26 && <span className="arrow down green-arrow" />}
+          {pathId === 13 && <span className="arrow right red-arrow" />}
+          {pathId === 39 && <span className="arrow left yellow-arrow" />}
         </div>,
       )
     }
@@ -188,9 +191,7 @@ export function Board({
     group.forEach((t, stackIndex) => {
       const canPick = myColor === t.color && highlight.includes(t.index)
       const offset =
-        group.length === 1
-          ? 0
-          : (stackIndex - (group.length - 1) / 2) * 22
+        group.length === 1 ? 0 : (stackIndex - (group.length - 1) / 2) * 22
       pathPieceNodes.push(
         <div
           key={`${t.color}-${t.index}`}
@@ -214,25 +215,27 @@ export function Board({
 
   return (
     <div className="board-wrap">
+      <p className="board-player-label top flipped">{greenName}</p>
+
       <div className="ludo-board" role="img" aria-label="Classic Ludu board">
-        <div className="board-bezel" aria-hidden />
         <div className="ludo-grid">
           {cells}
 
           <div className="center-home" aria-hidden>
-            <div className="tri t-red" />
             <div className="tri t-green" />
             <div className="tri t-yellow" />
             <div className="tri t-blue" />
+            <div className="tri t-red" />
           </div>
 
-          {/* Yard nests — pawns live INSIDE the circles */}
-          {(['green', 'yellow', 'red', 'blue'] as const).map((corner) => {
+          {CORNERS.map((corner) => {
             const o = YARD_ORIGIN[corner]
             const colors = CORNER_COLORS[corner]
             const activeColor: Color | null =
-              corner === 'red' || corner === 'yellow' ? corner : null
-            const slots = activeColor ? yardSlots(pieces, activeColor) : [null, null, null, null]
+              corner === 'blue' || corner === 'green' ? corner : null
+            const slots = activeColor
+              ? yardSlots(pieces, activeColor)
+              : [null, null, null, null]
 
             return (
               <div
@@ -245,6 +248,7 @@ export function Board({
                     '--yard-deep': colors.deep,
                     '--yard-soft': colors.soft,
                     '--yard': colors.yard,
+                    '--yard-css': colors.css,
                   } as CSSProperties
                 }
               >
@@ -257,7 +261,11 @@ export function Board({
                       highlight.includes(pieceIndex)
 
                     return (
-                      <div key={i} className="yard-circle">
+                      <div
+                        key={i}
+                        className="yard-circle"
+                        style={{ background: colors.css }}
+                      >
                         {activeColor != null && pieceIndex != null && (
                           <Pawn
                             color={activeColor}
@@ -277,10 +285,11 @@ export function Board({
             )
           })}
 
-          {/* Path / home pieces — locked to CSS grid cells */}
           {pathPieceNodes}
         </div>
       </div>
+
+      <p className="board-player-label bottom">{blueName}</p>
     </div>
   )
 }

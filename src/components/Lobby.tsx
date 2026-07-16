@@ -14,8 +14,8 @@ type Props = {
 
 /** Preview: Red + Yellow pawns in yards (looks like a real Ludu board). */
 const PREVIEW_PIECES = {
-  red: [-1, -1, -1, -1] as number[],
-  yellow: [-1, -1, -1, -1] as number[],
+  blue: [-1, -1, -1, -1] as number[],
+  green: [-1, -1, -1, -1] as number[],
 }
 
 export function Lobby({
@@ -42,7 +42,7 @@ export function Lobby({
       <div className="lobby-atmosphere" aria-hidden />
 
       <header className="lobby-hero">
-        <p className="lobby-kicker">Classic Ludu board · 2 players</p>
+        <p className="lobby-kicker">Classic Ludu · Blue vs Green · Need a 6</p>
         <h1 className="brand">LUDU</h1>
       </header>
 
@@ -52,7 +52,7 @@ export function Lobby({
           highlight={[]}
           myColor={null}
           onSelectPiece={() => {}}
-          currentTurn="red"
+          currentTurn="blue"
         />
       </div>
 

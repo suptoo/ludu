@@ -83,6 +83,30 @@
   line-height: 1.2;
 }
 
+.dice.is-six {
+  box-shadow:
+    0 0 0 3px #ff9800,
+    0 0 24px rgba(255, 152, 0, 0.75),
+    0 8px 0 #a89060,
+    0 14px 28px rgba(0, 0, 0, 0.35);
+  animation: six-pulse 0.9s ease-in-out infinite;
+}
+
+.dice-panel.six-glow .dice-hint {
+  color: #ffcc80;
+  font-weight: 700;
+}
+
+@keyframes six-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
 @keyframes dice-spin {
   0% {
     transform: rotate(0deg) scale(1);
@@ -94,6 +118,7 @@
     transform: rotate(360deg) scale(1);
   }
 }
+
 
 @media (min-width: 900px) {
   .dice {

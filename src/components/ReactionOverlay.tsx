@@ -13,7 +13,7 @@ export function ReactionOverlay({ items }: Props) {
       {items.map((item, i) => (
         <div
           key={item.id}
-          className={`reaction-float lane-${i % 5}${item.color === 'yellow' ? ' from-right' : ''}`}
+          className={`reaction-float lane-${i % 5}${item.color === 'green' ? ' from-right' : ''}`}
         >
           <span className="reaction-emoji">{item.body}</span>
           <span className="reaction-who">{item.sender_name}</span>

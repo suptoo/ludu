@@ -1,9 +1,9 @@
-export type Color = 'red' | 'yellow'
+export type Color = 'blue' | 'green'
 export type RoomStatus = 'waiting' | 'playing' | 'finished'
 
 export type PiecesState = {
-  red: number[]
-  yellow: number[]
+  blue: number[]
+  green: number[]
 }
 
 export type LuduRoom = {
@@ -33,7 +33,7 @@ export type PlayerSlot = {
 }
 
 /** Piece path index:
- *  -1  = still in yard
+ *  -1  = still in yard (need a 6 to leave)
  *  0–50 = on main ring (relative to that color's entry)
  *  51–55 = home stretch
  *  56 = finished / home triangle

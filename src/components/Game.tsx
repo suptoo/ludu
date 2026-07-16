@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { COLOR_META } from '../game/constants'
+import { hasPieceInYard } from '../game/engine'
 import type { Color, LuduRoom } from '../game/types'
 import type { ChatMessage } from '../game/chat'
 import { Board } from './Board'
@@ -60,8 +61,13 @@ export function Game({
   const canRoll =
     isMyTurn && canPlay && !room.dice_rolled && !busy && !localRolling
 
-  const redName = room.host_name
-  const yellowName = room.guest_name ?? (waiting ? 'Waiting for friend…' : '—')
+  const blueName = room.host_name
+  const greenName = room.guest_name ?? (waiting ? 'Waiting…' : '—')
+
+  const rolledSix = room.dice_value === 6
+  const needSixHint =
+    Boolean(isMyTurn && myColor && canPlay && !room.dice_rolled) &&
+    Boolean(myColor && hasPieceInYard(room.pieces, myColor))
 
   const inviteLink = (() => {
     try {
@@ -75,10 +81,10 @@ export function Game({
 
   const statusText =
     room.status === 'finished' && room.winner
-      ? `${room.winner === 'red' ? redName : yellowName} wins!`
+      ? `${room.winner === 'blue' ? blueName : greenName} wins!`
       : waiting
         ? `Waiting for friend — share link or code ${room.code}`
-        : room.last_action ?? 'Game ready'
+        : room.last_action ?? 'Need a 6 to leave base!'
 
   const copyText = async (value: string, kind: 'code' | 'link') => {
     try {
@@ -96,20 +102,11 @@ export function Game({
       <ReactionOverlay items={floatingReactions} />
 
       <div className={`game-layout${isPractice ? ' practice' : ''}`}>
-        <section className="board-column">
-          <div className="board-stage">
-            <Board
-              pieces={room.pieces}
-              highlight={movable}
-              myColor={myColor}
-              onSelectPiece={onMove}
-              currentTurn={room.current_turn}
-            />
-          </div>
-        </section>
-
         <aside className="side-column">
           <header className="game-top">
+            <button type="button" className="menu-btn" onClick={onLeave} aria-label="Menu">
+              ☰
+            </button>
             <div className="brand-mini">LUDU</div>
             {isPractice ? (
               <div className="room-chip practice-chip">
@@ -127,16 +124,11 @@ export function Game({
                 <span className="copy-hint">{copied === 'code' ? '✓' : 'Copy'}</span>
               </button>
             )}
-            <button type="button" className="leave-btn" onClick={onLeave}>
-              {isPractice ? 'Menu' : 'Leave'}
-            </button>
           </header>
 
           {waiting && (
             <div className="waiting-banner">
-              <p>
-                Share this link with your friend. You can practice as Red until they join.
-              </p>
+              <p>Share the link. Practice as Blue until they join. Need a 6 to leave base.</p>
               <div className="share-row">
                 <button
                   type="button"
@@ -155,24 +147,67 @@ export function Game({
               </div>
             </div>
           )}
+        </aside>
 
-          <div className="players-bar">
-            <PlayerCard
-              color="red"
-              name={redName}
-              you={myColor === 'red'}
-              active={
-                room.current_turn === 'red' &&
-                (room.status === 'playing' || waiting)
-              }
+        <section className="board-column">
+          <div className="board-stage">
+            <div
+              className={`corner-dice top-right${
+                room.current_turn === 'green' && canPlay ? ' active' : ''
+              }${rolledSix && room.current_turn === 'green' ? ' six' : ''}`}
+            >
+              <DiceFace
+                value={room.current_turn === 'green' ? room.dice_value : null}
+                rolling={localRolling && room.current_turn === 'green'}
+                color="green"
+              />
+              {room.current_turn === 'green' && canPlay && (
+                <span className="turn-arrow" aria-hidden>
+                  ▶
+                </span>
+              )}
+            </div>
+
+            <Board
+              pieces={room.pieces}
+              highlight={movable}
+              myColor={myColor}
+              onSelectPiece={onMove}
+              currentTurn={room.current_turn}
+              blueName={blueName}
+              greenName={greenName}
             />
-            <PlayerCard
-              color="yellow"
-              name={yellowName}
-              you={myColor === 'yellow'}
-              active={room.current_turn === 'yellow' && room.status === 'playing'}
-            />
+
+            <div
+              className={`corner-dice bottom-left${
+                room.current_turn === 'blue' && canPlay ? ' active' : ''
+              }${rolledSix && room.current_turn === 'blue' ? ' six' : ''}`}
+            >
+              {room.current_turn === 'blue' && canPlay && (
+                <span className="turn-arrow" aria-hidden>
+                  ▶
+                </span>
+              )}
+              <DiceFace
+                value={room.current_turn === 'blue' ? room.dice_value : null}
+                rolling={localRolling && room.current_turn === 'blue'}
+                color="blue"
+              />
+            </div>
           </div>
+        </section>
+
+        <div className="game-footer">
+          {needSixHint && (
+            <p className="six-banner" role="status">
+              Need a <strong>6</strong> to leave base
+            </p>
+          )}
+          {rolledSix && room.dice_rolled && (
+            <p className="six-banner six-hit" role="status">
+              SIX! Move a piece
+            </p>
+          )}
 
           <p className="status-line" role="status">
             {statusText}
@@ -191,8 +226,8 @@ export function Game({
             </button>
           )}
 
-          <div className="desktop-controls">
-            <div className="quick-reacts" aria-label="Quick reactions">
+          <div className="mobile-dock">
+            <div className="dock-reacts" aria-label="Quick reactions">
               {['😂', '🔥', '👏', '😮', '🎉', '👍'].map((emoji) => (
                 <button
                   key={emoji}
@@ -205,58 +240,28 @@ export function Game({
                 </button>
               ))}
             </div>
-            {canPlay && (
-              <Dice
-                value={room.dice_value}
-                rolling={localRolling}
-                disabled={!canRoll}
-                onRoll={onRoll}
-              />
-            )}
-            <button
-              type="button"
-              className="dock-chat desktop-chat-btn"
-              onClick={() => setChatOpen(true)}
-            >
-              Chat
-            </button>
-          </div>
-        </aside>
 
-        <div className="mobile-dock">
-          <div className="dock-reacts" aria-label="Quick reactions">
-            {['😂', '🔥', '👏', '😮', '🎉', '👍'].map((emoji) => (
+            <div className="dock-main">
+              {canPlay ? (
+                <Dice
+                  value={room.dice_value}
+                  rolling={localRolling}
+                  disabled={!canRoll}
+                  onRoll={onRoll}
+                  highlightSix={rolledSix}
+                />
+              ) : (
+                <div className="dock-spacer" />
+              )}
               <button
-                key={emoji}
                 type="button"
-                className="quick-react"
-                disabled={!myColor || chatSending}
-                onClick={() => onReact(emoji)}
+                className="dock-chat"
+                onClick={() => setChatOpen(true)}
+                aria-label="Open chat"
               >
-                {emoji}
+                Chat
               </button>
-            ))}
-          </div>
-
-          <div className="dock-main">
-            {canPlay ? (
-              <Dice
-                value={room.dice_value}
-                rolling={localRolling}
-                disabled={!canRoll}
-                onRoll={onRoll}
-              />
-            ) : (
-              <div className="dock-spacer" />
-            )}
-            <button
-              type="button"
-              className="dock-chat"
-              onClick={() => setChatOpen(true)}
-              aria-label="Open chat"
-            >
-              Chat
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -275,28 +280,83 @@ export function Game({
   )
 }
 
-function PlayerCard({
+const FACES: Record<number, number[][]> = {
+  1: [[1, 1]],
+  2: [
+    [0, 0],
+    [2, 2],
+  ],
+  3: [
+    [0, 0],
+    [1, 1],
+    [2, 2],
+  ],
+  4: [
+    [0, 0],
+    [0, 2],
+    [2, 0],
+    [2, 2],
+  ],
+  5: [
+    [0, 0],
+    [0, 2],
+    [1, 1],
+    [2, 0],
+    [2, 2],
+  ],
+  6: [
+    [0, 0],
+    [0, 2],
+    [1, 0],
+    [1, 2],
+    [2, 0],
+    [2, 2],
+  ],
+}
+
+function DiceFace({
+  value,
+  rolling,
   color,
-  name,
-  you,
-  active,
 }: {
+  value: number | null
+  rolling: boolean
   color: Color
-  name: string
-  you: boolean
-  active: boolean
 }) {
+  const show = value && value >= 1 && value <= 6 ? value : null
+  const pips = show ? FACES[show] : []
   return (
-    <div className={`player-card${active ? ' active' : ''}`}>
-      <span className="swatch" style={{ background: COLOR_META[color].css }} />
-      <div className="player-meta">
-        <div className="pname">
-          {name}
-          {you ? ' · you' : ''}
-        </div>
-        <div className="pcolor">{COLOR_META[color].label}</div>
-      </div>
-      {active && <span className="turn-dot" aria-label="Current turn" />}
+    <div
+      className={`dice-tray${rolling ? ' rolling' : ''}${show === 6 ? ' is-six' : ''}`}
+      style={{ '--tray': COLOR_META[color].css } as CSSProperties}
+    >
+      <span className="tray-token" aria-hidden>
+        <svg viewBox="0 0 48 64" width="22" height="28">
+          <path
+            d="M24 4c-9.4 0-17 7.6-17 17 0 12.8 17 35 17 35s17-22.2 17-35c0-9.4-7.6-17-17-17z"
+            fill={COLOR_META[color].css}
+            stroke="#111"
+            strokeWidth="2"
+          />
+          <circle cx="24" cy="20" r="8" fill="#fff" />
+          <circle cx="24" cy="20" r="5" fill={COLOR_META[color].css} />
+        </svg>
+      </span>
+      <span className="tray-die">
+        {show ? (
+          <span className="mini-face">
+            {pips.map(([r, c], i) => (
+              <span
+                key={i}
+                className="mini-pip"
+                style={{ gridRow: r + 1, gridColumn: c + 1 }}
+              />
+            ))}
+          </span>
+        ) : (
+          <span className="tray-empty" />
+        )}
+      </span>
     </div>
   )
 }

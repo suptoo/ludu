@@ -9,27 +9,18 @@
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 45% at 15% 20%, rgba(255, 59, 59, 0.16), transparent 50%),
-    radial-gradient(ellipse 60% 40% at 85% 15%, rgba(255, 208, 0, 0.14), transparent 48%),
-    radial-gradient(ellipse 55% 35% at 80% 85%, rgba(41, 121, 255, 0.12), transparent 50%),
-    radial-gradient(ellipse 50% 40% at 20% 90%, rgba(0, 200, 83, 0.12), transparent 50%),
-    radial-gradient(ellipse 90% 60% at 50% 40%, rgba(20, 80, 50, 0.35), transparent 70%),
-    linear-gradient(180deg, #0f2a1c 0%, #071510 50%, #040d0a 100%);
+    linear-gradient(180deg, #0a3d7a 0%, #0b4a94 40%, #08366c 100%);
 }
 
 .game-atmosphere::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(232, 200, 114, 0.08), transparent 40%),
-    repeating-linear-gradient(
-      -12deg,
-      transparent,
-      transparent 22px,
-      rgba(255, 255, 255, 0.012) 22px,
-      rgba(255, 255, 255, 0.012) 23px
-    );
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%230a3d7a' width='120' height='120'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.2' opacity='0.55'%3E%3Crect x='20' y='20' width='80' height='80' rx='4'/%3E%3Cpath d='M20 50h80M20 70h80M50 20v80M70 20v80'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 96px 96px;
+  transform: rotate(-12deg) scale(1.35);
+  transform-origin: center;
   pointer-events: none;
 }
 
@@ -37,7 +28,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.35) 100%);
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
 }
 
@@ -74,11 +65,202 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  padding: 0.35rem 0 0.5rem;
 }
 
 .board-stage .board-wrap {
-  width: min(100%, 94vw, calc(100dvh - 16.5rem));
+  width: min(100%, 92vw, calc(100dvh - 15rem));
   max-width: 420px;
+}
+
+/* Corner dice trays like classic mobile Ludu */
+.corner-dice {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  pointer-events: none;
+}
+
+.corner-dice.top-right {
+  top: 0;
+  right: 0;
+  transform: translate(4%, -8%);
+}
+
+.corner-dice.bottom-left {
+  bottom: 1.6rem;
+  left: 0;
+  transform: translate(-4%, 8%);
+}
+
+.corner-dice .turn-arrow {
+  color: #ff9800;
+  font-size: 1.1rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  animation: arrow-bob 0.8s ease-in-out infinite;
+}
+
+.corner-dice.top-right .turn-arrow {
+  order: -1;
+  transform: rotate(180deg);
+}
+
+.dice-tray {
+  display: flex;
+  align-items: stretch;
+  border-radius: 10px;
+  border: 2px solid #f5c542;
+  background: linear-gradient(180deg, #fff8e7, #f3e0c0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  min-height: 44px;
+}
+
+.dice-tray.is-six {
+  border-color: #ff9800;
+  box-shadow: 0 0 0 2px #ff9800, 0 0 16px rgba(255, 152, 0, 0.7);
+}
+
+.dice-tray.rolling {
+  animation: dice-spin 0.55s ease-in-out;
+}
+
+.tray-token {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  background: var(--tray, #1e88e5);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tray-die {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  background: #fff;
+}
+
+.tray-empty {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #f8d7da;
+  border: 1px solid #f1aeb5;
+}
+
+.mini-face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.mini-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #111;
+  place-self: center;
+}
+
+.menu-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #f5c542;
+  background: #0b4a94;
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
+}
+
+.six-banner {
+  margin: 0;
+  text-align: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 152, 0, 0.55);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+}
+
+.six-banner strong {
+  color: #ffcc80;
+  font-size: 1.15em;
+}
+
+.six-banner.six-hit {
+  background: rgba(255, 152, 0, 0.35);
+  animation: six-pulse 0.9s ease-in-out infinite;
+}
+
+.game-footer {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  order: 3;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+@keyframes arrow-bob {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.corner-dice.top-right .turn-arrow {
+  animation-name: arrow-bob-flip;
+}
+
+@keyframes arrow-bob-flip {
+  0%,
+  100% {
+    transform: rotate(180deg) translateX(0);
+  }
+  50% {
+    transform: rotate(180deg) translateX(4px);
+  }
+}
+
+@keyframes six-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes dice-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  40% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 /* Side column — above board on mobile (header/players) */
@@ -334,9 +516,9 @@
     calc(0.55rem + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(
     180deg,
-    rgba(4, 13, 10, 0) 0%,
-    rgba(4, 13, 10, 0.75) 22%,
-    rgba(8, 21, 16, 0.96) 100%
+    rgba(8, 54, 108, 0) 0%,
+    rgba(8, 54, 108, 0.75) 22%,
+    rgba(6, 40, 82, 0.96) 100%
   );
   backdrop-filter: blur(8px);
   display: flex;

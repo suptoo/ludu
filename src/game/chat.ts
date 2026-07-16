@@ -5,7 +5,7 @@ export type ChatMessage = {
   room_id: string
   sender_id: string
   sender_name: string
-  color: 'red' | 'yellow'
+  color: 'blue' | 'green'
   kind: ChatKind
   body: string
   created_at: string

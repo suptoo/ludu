@@ -5,6 +5,7 @@ type Props = {
   rolling: boolean
   disabled: boolean
   onRoll: () => void
+  highlightSix?: boolean
 }
 
 const FACES: Record<number, number[][]> = {
@@ -41,18 +42,19 @@ const FACES: Record<number, number[][]> = {
   ],
 }
 
-export function Dice({ value, rolling, disabled, onRoll }: Props) {
+export function Dice({ value, rolling, disabled, onRoll, highlightSix }: Props) {
   const show = value && value >= 1 && value <= 6 ? value : 1
   const pips = FACES[show]
+  const isSix = value === 6 || highlightSix
 
   return (
-    <div className="dice-panel">
+    <div className={`dice-panel${isSix ? ' six-glow' : ''}`}>
       <button
         type="button"
-        className={`dice${rolling ? ' rolling' : ''}`}
+        className={`dice${rolling ? ' rolling' : ''}${isSix ? ' is-six' : ''}`}
         onClick={onRoll}
         disabled={disabled || rolling}
-        aria-label={disabled ? 'Waiting for turn' : 'Roll dice'}
+        aria-label={disabled ? 'Waiting for turn' : 'Roll dice — need 6 to leave base'}
       >
         <span className="dice-face">
           {pips.map(([r, c], i) => (
@@ -65,7 +67,13 @@ export function Dice({ value, rolling, disabled, onRoll }: Props) {
         </span>
       </button>
       <p className="dice-hint">
-        {rolling ? 'Rolling…' : disabled ? 'Wait for your turn' : 'Tap to roll'}
+        {rolling
+          ? 'Rolling…'
+          : disabled
+            ? 'Wait for your turn'
+            : isSix
+              ? 'SIX!'
+              : 'Tap to roll · need 6'}
       </p>
     </div>
   )

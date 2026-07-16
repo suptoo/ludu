@@ -3,14 +3,15 @@ import type { Color, PiecesState } from './types'
 import { FINISHED, HOME_START, YARD } from './types'
 
 const OPPONENT: Record<Color, Color> = {
-  red: 'yellow',
-  yellow: 'red',
+  blue: 'green',
+  green: 'blue',
 }
 
 export function rollDice(): number {
   return Math.floor(Math.random() * 6) + 1
 }
 
+/** Classic Ludu: only a 6 lets a piece leave the yard. */
 export function canLeaveYard(dice: number): boolean {
   return dice === 6
 }
@@ -44,7 +45,6 @@ export function getMovablePieces(
   const movable: number[] = []
   pieces[color].forEach((pos, index) => {
     if (getDestination(pos, dice) !== null) {
-      // Extra: if leaving yard, only one token can leave per 6 (all eligible ok)
       movable.push(index)
     }
   })
@@ -57,6 +57,11 @@ export function hasAnyMove(
   dice: number,
 ): boolean {
   return getMovablePieces(pieces, color, dice).length > 0
+}
+
+/** True when this color still has at least one piece in the yard. */
+export function hasPieceInYard(pieces: PiecesState, color: Color): boolean {
+  return pieces[color].some((p) => p === YARD)
 }
 
 function occupiesAbsolute(
@@ -80,6 +85,7 @@ export type MoveResult = {
   captured: boolean
   finishedPiece: boolean
   extraTurn: boolean
+  leftYard: boolean
 }
 
 export function applyMove(
@@ -93,13 +99,14 @@ export function applyMove(
   if (dest === null) return null
 
   const nextPieces: PiecesState = {
-    red: [...pieces.red],
-    yellow: [...pieces.yellow],
+    blue: [...pieces.blue],
+    green: [...pieces.green],
   }
   nextPieces[color][pieceIndex] = dest
 
   let captured = false
   const finishedPiece = dest === FINISHED
+  const leftYard = from === YARD
   const abs = toAbsolute(color, dest)
 
   // Capture on shared ring only (not home stretch / finish / safe)
@@ -112,15 +119,15 @@ export function applyMove(
     const foe = OPPONENT[color]
     const victims = occupiesAbsolute(nextPieces, foe, abs)
     if (victims.length === 1) {
-      // Only capture a single token (block of 2+ is safe in classic house rules)
       nextPieces[foe][victims[0]] = YARD
       captured = true
     }
   }
 
+  // Extra turn on 6, capture, or finishing a piece
   const extraTurn = dice === 6 || captured || finishedPiece
 
-  return { pieces: nextPieces, captured, finishedPiece, extraTurn }
+  return { pieces: nextPieces, captured, finishedPiece, extraTurn, leftYard }
 }
 
 export function checkWinner(pieces: PiecesState, color: Color): boolean {
@@ -136,8 +143,8 @@ export function playerColorFor(
   hostId: string,
   guestId: string | null,
 ): Color | null {
-  if (playerId === hostId) return 'red'
-  if (guestId && playerId === guestId) return 'yellow'
+  if (playerId === hostId) return 'blue'
+  if (guestId && playerId === guestId) return 'green'
   return null
 }
 
@@ -165,7 +172,6 @@ export function makePlayerId(): string {
   }
 }
 
-/** Debug helper: absolute entry cell for a color */
 export function entryCell(color: Color): number {
   return ENTRY[color]
 }
