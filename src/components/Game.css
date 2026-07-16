@@ -204,6 +204,19 @@
   min-height: 44px;
 }
 
+.copy-inline.ghost {
+  background: transparent;
+  color: #fef9c3;
+  border: 1px solid rgba(254, 249, 195, 0.45);
+}
+
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+}
+
 .players-bar {
   width: 100%;
   display: grid;
@@ -402,20 +415,6 @@
 }
 
 @media (max-width: 899px) {
-  .chat-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 35;
-    border: none;
-    background: rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-  }
-
-  .game-layout > .chat-panel:not(.open) {
-    pointer-events: none;
-  }
-
   /* On mobile: board sits between side info and dock */
   .board-column {
     order: 2;
@@ -486,20 +485,9 @@
   }
 
   .desktop-chat-btn {
-    display: none;
-  }
-
-  .chat-panel {
-    display: flex !important;
-    width: 300px;
-    flex-shrink: 0;
-    height: calc(100dvh - 2.5rem);
-    max-height: 720px;
-    order: 2;
-  }
-
-  .game-layout.practice .chat-panel {
-    display: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

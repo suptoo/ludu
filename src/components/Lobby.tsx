@@ -5,12 +5,11 @@ import './Lobby.css'
 type Props = {
   playerName: string
   onSaveName: (name: string) => void
-  configured: boolean
   busy: boolean
   error: string | null
-  onCreate: () => void
-  onJoin: (code: string) => void
-  onPractice: () => void
+  onCreate: (name: string) => void
+  onJoin: (code: string, name: string) => void
+  onPractice: (name: string) => void
 }
 
 /** Preview: Red + Yellow pawns in yards (looks like a real Ludu board). */
@@ -22,7 +21,6 @@ const PREVIEW_PIECES = {
 export function Lobby({
   playerName,
   onSaveName,
-  configured,
   busy,
   error,
   onCreate,
@@ -34,7 +32,9 @@ export function Lobby({
   const [mode, setMode] = useState<'home' | 'join'>('home')
 
   const commitName = () => {
-    if (name.trim()) onSaveName(name.trim())
+    const trimmed = name.trim() || 'Player'
+    onSaveName(trimmed)
+    return trimmed
   }
 
   return (
@@ -62,8 +62,7 @@ export function Lobby({
           className="btn primary btn-play"
           disabled={busy}
           onClick={() => {
-            commitName()
-            onPractice()
+            onPractice(commitName())
           }}
         >
           ▶ Play Ludu now
@@ -87,10 +86,9 @@ export function Lobby({
             <button
               type="button"
               className="btn ghost"
-              disabled={busy || !configured || !name.trim()}
+              disabled={busy || !name.trim()}
               onClick={() => {
-                commitName()
-                onCreate()
+                onCreate(commitName())
               }}
             >
               Online: create room
@@ -98,7 +96,7 @@ export function Lobby({
             <button
               type="button"
               className="btn ghost"
-              disabled={busy || !configured || !name.trim()}
+              disabled={busy || !name.trim()}
               onClick={() => {
                 commitName()
                 setMode('join')
@@ -125,8 +123,7 @@ export function Lobby({
                 }
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && code.trim().length >= 4) {
-                    commitName()
-                    onJoin(code)
+                    onJoin(code, commitName())
                   }
                 }}
               />
@@ -136,8 +133,7 @@ export function Lobby({
               className="btn primary"
               disabled={busy || code.trim().length < 4}
               onClick={() => {
-                commitName()
-                onJoin(code)
+                onJoin(code, commitName())
               }}
             >
               Join game

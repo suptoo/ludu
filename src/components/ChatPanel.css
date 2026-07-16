@@ -1,29 +1,45 @@
+/* Chat — portaled overlay (never crushes the game layout) */
+
+.chat-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
 .chat-panel {
   display: flex;
   flex-direction: column;
-  background: rgba(8, 21, 16, 0.96);
-  border: 1px solid rgba(247, 243, 232, 0.12);
+  background: #0a1612;
+  border: 1px solid rgba(247, 243, 232, 0.14);
   color: #f7f3e8;
-  z-index: 40;
+  z-index: 100;
+  box-sizing: border-box;
 }
 
-/* Mobile: bottom sheet */
+/* Mobile bottom sheet */
 @media (max-width: 899px) {
   .chat-panel {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: min(72dvh, 560px);
+    width: 100%;
+    height: min(62dvh, 480px);
+    max-height: calc(100dvh - 4rem);
     border-radius: 20px 20px 0 0;
     transform: translateY(110%);
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.5);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
   }
 
   .chat-panel.open {
     transform: translateY(0);
+    pointer-events: auto;
   }
 
   .chat-panel::before {
@@ -33,20 +49,39 @@
     height: 4px;
     border-radius: 999px;
     background: rgba(247, 243, 232, 0.28);
-    margin: 0.55rem auto 0.15rem;
+    margin: 0.55rem auto 0.1rem;
     flex-shrink: 0;
+  }
+
+  .chat-scrim {
+    display: block;
   }
 }
 
-/* Desktop: side column */
+/* Desktop side drawer */
 @media (min-width: 900px) {
+  .chat-scrim {
+    display: none;
+  }
+
   .chat-panel {
-    position: relative;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
     width: 320px;
-    height: min(720px, calc(100dvh - 2rem));
+    height: auto;
+    max-height: calc(100dvh - 2rem);
     border-radius: 16px;
-    flex-shrink: 0;
-    transform: none !important;
+    transform: translateX(120%);
+    transition: transform 0.28s ease;
+    pointer-events: none;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .chat-panel.open {
+    transform: translateX(0);
+    pointer-events: auto;
   }
 }
 
@@ -54,8 +89,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1rem 0.5rem;
+  padding: 0.75rem 1rem 0.5rem;
   border-bottom: 1px solid rgba(247, 243, 232, 0.1);
+  flex-shrink: 0;
 }
 
 .chat-head h2 {
@@ -65,30 +101,26 @@
 }
 
 .chat-close {
-  display: none;
+  display: grid;
+  place-items: center;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   color: #f7f3e8;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   cursor: pointer;
   font-size: 1rem;
-}
-
-@media (max-width: 899px) {
-  .chat-close {
-    display: grid;
-    place-items: center;
-  }
+  touch-action: manipulation;
 }
 
 .reactions-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.85rem;
   border-bottom: 1px solid rgba(247, 243, 232, 0.08);
+  flex-shrink: 0;
 }
 
 .react-btn {
@@ -111,7 +143,8 @@
 }
 
 .chat-list {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 0.75rem 0.85rem;
   display: flex;
@@ -155,17 +188,26 @@
   word-break: break-word;
 }
 
+.chat-error {
+  margin: 0;
+  padding: 0.35rem 0.85rem;
+  color: #fecdd3;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
 .chat-form {
   display: flex;
   gap: 0.45rem;
   padding: 0.65rem 0.75rem 0.85rem;
   border-top: 1px solid rgba(247, 243, 232, 0.1);
+  flex-shrink: 0;
 }
 
 .chat-form input {
   flex: 1;
   min-width: 0;
-  font-size: 16px; /* prevents iOS zoom */
+  font-size: 16px;
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
   border: 1px solid rgba(247, 243, 232, 0.18);

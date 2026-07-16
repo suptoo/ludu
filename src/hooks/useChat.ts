@@ -16,6 +16,10 @@ function normalize(row: Record<string, unknown>): ChatMessage {
   }
 }
 
+function isLocalRoomId(roomId: string | undefined) {
+  return Boolean(roomId?.startsWith('local-'))
+}
+
 export function useChat(
   roomId: string | undefined,
   playerId: string,
@@ -29,7 +33,12 @@ export function useChat(
   const seenReactions = useRef(new Set<string>())
 
   useEffect(() => {
-    if (!roomId || !supabase) return
+    setMessages([])
+    setFloating([])
+    seenReactions.current = new Set()
+    if (!roomId) return
+
+    if (isLocalRoomId(roomId)) return
 
     let cancelled = false
 
@@ -82,34 +91,85 @@ export function useChat(
 
     return () => {
       cancelled = true
-      void supabase!.removeChannel(channel)
+      void supabase.removeChannel(channel)
     }
   }, [roomId])
 
+  const pushLocal = useCallback((msg: ChatMessage) => {
+    if (msg.kind === 'chat') {
+      setMessages((prev) => [...prev.slice(-79), msg])
+      return
+    }
+    if (seenReactions.current.has(msg.id)) return
+    seenReactions.current.add(msg.id)
+    setFloating((prev) => [...prev, msg])
+    window.setTimeout(() => {
+      setFloating((prev) => prev.filter((m) => m.id !== msg.id))
+    }, 2200)
+  }, [])
+
   const send = useCallback(
     async (body: string, kind: 'chat' | 'reaction' = 'chat') => {
-      if (!supabase || !roomId || !color) return
+      if (!roomId || !color) {
+        setError('Join a room to chat.')
+        return
+      }
       const text = body.trim()
       if (!text) return
       setSending(true)
       setError(null)
+
+      const optimistic: ChatMessage = {
+        id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        room_id: roomId,
+        sender_id: playerId,
+        sender_name: playerName || 'Player',
+        color,
+        kind,
+        body: text.slice(0, 280),
+        created_at: new Date().toISOString(),
+      }
+
       try {
-        const { error: err } = await supabase.from('ludu_chat').insert({
-          room_id: roomId,
-          sender_id: playerId,
-          sender_name: playerName || 'Player',
-          color,
-          kind,
-          body: text.slice(0, 280),
-        })
+        if (isLocalRoomId(roomId)) {
+          pushLocal(optimistic)
+          return
+        }
+
+        // Show instantly, then persist
+        pushLocal(optimistic)
+
+        const { data, error: err } = await supabase
+          .from('ludu_chat')
+          .insert({
+            room_id: roomId,
+            sender_id: playerId,
+            sender_name: playerName || 'Player',
+            color,
+            kind,
+            body: text.slice(0, 280),
+          })
+          .select('*')
+          .single()
+
         if (err) throw err
+
+        if (data && kind === 'chat') {
+          const real = normalize(data as Record<string, unknown>)
+          setMessages((prev) => {
+            const withoutTmp = prev.filter((m) => m.id !== optimistic.id)
+            if (withoutTmp.some((m) => m.id === real.id)) return withoutTmp
+            return [...withoutTmp, real]
+          })
+        }
       } catch (e) {
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
         setError(e instanceof Error ? e.message : 'Could not send.')
       } finally {
         setSending(false)
       }
     },
-    [roomId, playerId, playerName, color],
+    [roomId, playerId, playerName, color, pushLocal],
   )
 
   return { messages, floating, sending, error, send }

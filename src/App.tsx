@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Game } from './components/Game'
 import { Lobby } from './components/Lobby'
 import { useChat } from './hooks/useChat'
 import { useGameRoom, usePlayerIdentity } from './hooks/useGameRoom'
 import './App.css'
 
+function readRoomFromUrl(): string | null {
+  try {
+    const code = new URLSearchParams(window.location.search).get('room')
+    return code ? code.trim().toUpperCase() : null
+  } catch {
+    return null
+  }
+}
+
 export default function App() {
   const { playerId, playerName, saveName } = usePlayerIdentity()
   const game = useGameRoom(playerId, playerName)
-  const chat = useChat(
-    game.isPractice ? undefined : game.room?.id,
-    playerId,
-    playerName,
-    game.myColor,
-  )
+  const chat = useChat(game.room?.id, playerId, playerName, game.myColor)
+  const autoJoinTried = useRef(false)
 
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches,
@@ -26,17 +31,26 @@ export default function App() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  // Open invite link: https://yoursite.com/?room=ABC123
+  useEffect(() => {
+    if (autoJoinTried.current || game.room) return
+    const code = readRoomFromUrl()
+    if (!code) return
+    autoJoinTried.current = true
+    void game.joinRoom(code)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- join once on load
+  }, [game.room, game.joinRoom])
+
   if (!game.room) {
     return (
       <Lobby
         playerName={playerName}
         onSaveName={saveName}
-        configured={game.configured}
         busy={game.busy}
         error={game.error}
-        onCreate={game.createRoom}
-        onJoin={game.joinRoom}
-        onPractice={game.startPractice}
+        onCreate={(name) => void game.createRoom(name)}
+        onJoin={(code, name) => void game.joinRoom(code, name)}
+        onPractice={(name) => game.startPractice(name)}
       />
     )
   }
@@ -53,6 +67,7 @@ export default function App() {
       messages={chat.messages}
       floatingReactions={chat.floating}
       chatSending={chat.sending}
+      chatError={chat.error}
       isPractice={game.isPractice}
       onRoll={game.doRoll}
       onMove={game.doMove}
@@ -60,7 +75,8 @@ export default function App() {
       onRematch={game.rematch}
       onSendChat={(text) => void chat.send(text, 'chat')}
       onReact={(emoji) => void chat.send(emoji, 'reaction')}
-      forceChatOpen={isDesktop && !game.isPractice}
+      forceChatOpen={false}
+      isDesktop={isDesktop}
     />
   )
 }

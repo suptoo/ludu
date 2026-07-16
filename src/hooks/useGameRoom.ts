@@ -51,7 +51,11 @@ function makeLocalRoom(playerId: string, playerName: string): LuduRoom {
   const now = new Date().toISOString()
   const name = playerName.trim() || 'You'
   return {
-    id: `local-${crypto.randomUUID()}`,
+    id: `local-${
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    }`,
     code: 'LOCAL',
     status: 'playing',
     host_id: playerId,
@@ -72,13 +76,21 @@ function makeLocalRoom(playerId: string, playerName: string): LuduRoom {
 
 export function usePlayerIdentity() {
   const [playerId] = useState(() => makePlayerId())
-  const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem('ludu_player_name') || 'Player',
-  )
+  const [playerName, setPlayerName] = useState(() => {
+    try {
+      return localStorage.getItem('ludu_player_name') || 'Player'
+    } catch {
+      return 'Player'
+    }
+  })
 
   const saveName = useCallback((name: string) => {
     const trimmed = name.trim().slice(0, 20) || 'Player'
-    localStorage.setItem('ludu_player_name', trimmed)
+    try {
+      localStorage.setItem('ludu_player_name', trimmed)
+    } catch {
+      /* ignore */
+    }
     setPlayerName(trimmed)
   }, [])
 
@@ -118,7 +130,7 @@ export function useGameRoom(playerId: string, playerName: string) {
   }, [room, myColor, isMyTurn])
 
   useEffect(() => {
-    if (!room?.id || local || !supabase) return
+    if (!room?.id || local) return
 
     const channel = supabase
       .channel(`ludu-room-${room.id}`)
@@ -139,12 +151,12 @@ export function useGameRoom(playerId: string, playerName: string) {
       .subscribe()
 
     return () => {
-      void supabase!.removeChannel(channel)
+      void supabase.removeChannel(channel)
     }
   }, [room?.id, local])
 
   const refreshRoom = useCallback(async (id: string) => {
-    if (!supabase || id.startsWith('local-')) return
+    if (id.startsWith('local-')) return
     const { data, error: err } = await supabase
       .from('ludu_rooms')
       .select('*')
@@ -169,7 +181,6 @@ export function useGameRoom(playerId: string, playerName: string) {
         return
       }
 
-      if (!supabase) throw new Error('Online play needs Supabase.')
       const { data, error: err } = await supabase
         .from('ludu_rooms')
         .update({
@@ -185,52 +196,67 @@ export function useGameRoom(playerId: string, playerName: string) {
     [room],
   )
 
-  const startPractice = useCallback(() => {
-    setError(null)
-    setRoom(makeLocalRoom(playerId, playerName))
-  }, [playerId, playerName])
-
-  const createRoom = useCallback(async () => {
-    if (!supabase) {
-      setError('Supabase is not configured. Use Play Ludu for offline practice.')
-      return
-    }
-    if (!playerName.trim()) {
-      setError('Enter your name first.')
-      return
-    }
-    setBusy(true)
-    setError(null)
+  const setRoomInUrl = useCallback((code: string | null) => {
     try {
-      const code = makeRoomCode()
-      const { data, error: err } = await supabase
-        .from('ludu_rooms')
-        .insert({
-          code,
-          host_id: playerId,
-          host_name: playerName.trim(),
-          status: 'waiting',
-          pieces: EMPTY_PIECES,
-          last_action: 'Room created — practice as Red until your friend joins.',
-        })
-        .select('*')
-        .single()
-      if (err) throw err
-      setRoom(normalizeRoom(data as Record<string, unknown>))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create room.')
-    } finally {
-      setBusy(false)
+      const url = new URL(window.location.href)
+      if (code) url.searchParams.set('room', code)
+      else url.searchParams.delete('room')
+      window.history.replaceState({}, '', url.toString())
+    } catch {
+      /* ignore */
     }
-  }, [playerId, playerName])
+  }, [])
 
-  const joinRoom = useCallback(
-    async (code: string) => {
-      if (!supabase) {
-        setError('Supabase is not configured.')
+  const startPractice = useCallback(
+    (nameOverride?: string) => {
+      const name = (nameOverride ?? playerName).trim() || 'You'
+      setError(null)
+      setRoomInUrl(null)
+      setRoom(makeLocalRoom(playerId, name))
+    },
+    [playerId, playerName, setRoomInUrl],
+  )
+
+  const createRoom = useCallback(
+    async (nameOverride?: string) => {
+      const name = (nameOverride ?? playerName).trim()
+      if (!name) {
+        setError('Enter your name first.')
         return
       }
-      if (!playerName.trim()) {
+      setBusy(true)
+      setError(null)
+      try {
+        const code = makeRoomCode()
+        const { data, error: err } = await supabase
+          .from('ludu_rooms')
+          .insert({
+            code,
+            host_id: playerId,
+            host_name: name,
+            status: 'waiting',
+            pieces: EMPTY_PIECES,
+            last_action: 'Room created — share the link. Practice as Red until friend joins.',
+          })
+          .select('*')
+          .single()
+        if (err) throw err
+        const normalized = normalizeRoom(data as Record<string, unknown>)
+        setRoomInUrl(normalized.code)
+        setRoom(normalized)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not create room.')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [playerId, playerName, setRoomInUrl],
+  )
+
+  const joinRoom = useCallback(
+    async (code: string, nameOverride?: string) => {
+      const name = (nameOverride ?? playerName).trim()
+      if (!name) {
         setError('Enter your name first.')
         return
       }
@@ -238,6 +264,8 @@ export function useGameRoom(playerId: string, playerName: string) {
       setError(null)
       try {
         const normalized = code.trim().toUpperCase()
+        if (normalized.length < 4) throw new Error('Enter a valid room code.')
+
         const { data: existing, error: findErr } = await supabase
           .from('ludu_rooms')
           .select('*')
@@ -248,6 +276,7 @@ export function useGameRoom(playerId: string, playerName: string) {
         const current = normalizeRoom(existing as Record<string, unknown>)
 
         if (current.host_id === playerId || current.guest_id === playerId) {
+          setRoomInUrl(current.code)
           setRoom(current)
           return
         }
@@ -262,7 +291,7 @@ export function useGameRoom(playerId: string, playerName: string) {
           .from('ludu_rooms')
           .update({
             guest_id: playerId,
-            guest_name: playerName.trim(),
+            guest_name: name,
             status: 'playing',
             current_turn: 'red',
             dice_value: null,
@@ -270,7 +299,7 @@ export function useGameRoom(playerId: string, playerName: string) {
             consecutive_sixes: 0,
             winner: null,
             pieces: EMPTY_PIECES,
-            last_action: `${playerName.trim()} joined! Fresh start — Red goes first.`,
+            last_action: `${name} joined! Fresh start — Red goes first.`,
             updated_at: new Date().toISOString(),
           })
           .eq('id', current.id)
@@ -280,20 +309,23 @@ export function useGameRoom(playerId: string, playerName: string) {
           .single()
 
         if (updErr || !data) throw new Error('Could not join — room may be full.')
-        setRoom(normalizeRoom(data as Record<string, unknown>))
+        const joined = normalizeRoom(data as Record<string, unknown>)
+        setRoomInUrl(joined.code)
+        setRoom(joined)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not join room.')
       } finally {
         setBusy(false)
       }
     },
-    [playerId, playerName],
+    [playerId, playerName, setRoomInUrl],
   )
 
   const leaveRoom = useCallback(() => {
     setRoom(null)
     setError(null)
-  }, [])
+    setRoomInUrl(null)
+  }, [setRoomInUrl])
 
   const doRoll = useCallback(async () => {
     if (!room || !myColor || !isMyTurn || room.dice_rolled || busy) return

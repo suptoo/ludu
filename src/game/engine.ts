@@ -151,11 +151,18 @@ export function makeRoomCode(): string {
 }
 
 export function makePlayerId(): string {
-  const existing = localStorage.getItem('ludu_player_id')
-  if (existing) return existing
-  const id = crypto.randomUUID()
-  localStorage.setItem('ludu_player_id', id)
-  return id
+  try {
+    const existing = localStorage.getItem('ludu_player_id')
+    if (existing) return existing
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `p-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    localStorage.setItem('ludu_player_id', id)
+    return id
+  } catch {
+    return `p-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  }
 }
 
 /** Debug helper: absolute entry cell for a color */
